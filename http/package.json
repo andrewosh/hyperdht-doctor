@@ -1,0 +1,31 @@
+{
+  "name": "@hyperdht-doctor/http",
+  "version": "1.0.0",
+  "description": "HTTP server for aggregating diagnostic info",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrewosh/hyperdht-doctor.git"
+  },
+  "keywords": [
+    "hyperswarm",
+    "dht",
+    "doctor"
+  ],
+  "author": "Andrew Osheroff <andrewosh@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andrewosh/hyperdht-doctor/issues"
+  },
+  "homepage": "https://github.com/andrewosh/hyperdht-doctor#readme",
+  "dependencies": {
+    "@hyperswarm/dht": "^4.0.1",
+    "buffer-json-encoding": "^1.0.2",
+    "debounceify": "^1.0.0",
+    "fastify": "^3.18.0",
+    "level": "^7.0.0"
+  }
+}

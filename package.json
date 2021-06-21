@@ -1,0 +1,9 @@
+{
+  "name": "hyperdht-doctor",
+  "workspaces": [
+    "cli",
+    "http",
+    "dht-server",
+    "api"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@hyperdht-doctor/client",
+  "description": "A client module for @hyperdht-doctor",
+  "version": "1.0.0",
+  "author": "Andrew Osheroff <andrewosh@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/andrewosh/hyperdht-doctor/issues"
+  },
+  "dependencies": {
+    "@hyperswarm/dht": "^5.0.0-rc.1",
+    "got": "^11.8.2",
+    "hypercore-crypto": "^2.3.0",
+    "listr2": "^3.10.0",
+    "minimist": "^1.2.5",
+    "ora": "^5.4.1",
+    "pino": "^6.11.3",
+    "prompt": "^1.1.0",
+    "pump": "^3.0.0"
+  },
+  "devDependencies": {
+    "standard": "^16.0.3",
+    "tape": "^5.2.2"
+  },
+  "homepage": "https://github.com/andrewosh/hyperdht-doctor#readme",
+  "keywords": [
+    "dht",
+    "doctor",
+    "hyperswarm"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrewosh/hyperdht-doctor.git"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  }
+}
