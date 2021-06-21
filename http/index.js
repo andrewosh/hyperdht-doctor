@@ -61,8 +61,6 @@ module.exports = class CoordinationServer {
       refreshInterval = REFRESH_INTERVAL
     } = opts
 
-    console.log('config:', config)
-
     if (!storage) throw new Error('Must provide a storage path')
     if (!config.servers) throw new Error('Malformed configuration')
 
@@ -86,7 +84,6 @@ module.exports = class CoordinationServer {
       }
     })
     this._refreshInterval = refreshInterval
-    console.log('refresh interval:', this._refreshInterval)
     this._refresher = debounce(this._refreshManifest.bind(this))
     this._manifest = { servers: [] }
     this._timer = null
@@ -107,7 +104,6 @@ module.exports = class CoordinationServer {
 
   async destroy () {
     if (this.destroyed) return
-    console.log('Server destroying...')
     this.destroyed = true
     if (this._timer) {
       clearInterval(this._timer)
@@ -116,7 +112,6 @@ module.exports = class CoordinationServer {
     await this.server.close()
     await this.db.close()
     await this.doctor.destroy()
-    console.log('after destroy')
   }
 
   async _refreshManifest () {
@@ -132,9 +127,8 @@ module.exports = class CoordinationServer {
         this._logger.error({ err, server: server.publicKey }, 'ping errored')
         continue
       }
-      this._manifest = { servers }
     }
-    console.log('after refreshing, manifest:', this._manifest)
+    this._manifest = { servers }
   }
 
   async _sendManifest (req, res) {

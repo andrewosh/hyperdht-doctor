@@ -91,35 +91,37 @@ module.exports = class Doctor {
     }
 
     // Ping once to see if we can connect at all
-    onprogress('test-start', 'first-ping')
+    onprogress('test', 'start', 'first-ping', publicKey)
     report.firstPing = await timeAndCatch(() => this.ping(keyBuf))
-    onprogress('test-end', 'first-ping', report.firstPing)
+    onprogress('test', 'end', 'first-ping', publicKey, report.firstPing)
 
     if (report.firstPing.err) {
       // If we couldn't even ping the server, skip the remaining tests
-      onprogress('terminating')
+      onprogress('test', 'terminating', publicKey)
       return report
     }
 
     // Ping with data
-    onprogress('test-start', 'ping-with-data')
+    onprogress('test', 'start', 'ping-with-data', publicKey)
     const dataResult = await timeAndCatch(() => this.pingWithData(keyBuf))
     report.pingWithData = {
       err: dataResult.err,
-      info: dataResult.err ? {
+      info: dataResult.err && dataResult.err.info ? {
         hashes: dataResult.err.info.hashes.map(h => h.toString('hex')),
         responses: dataResult.err.info.responses.map(h => h.toString('hex'))
       }: null,
       duration: dataResult.duration
     }
-    onprogress('test-end', 'ping-with-data', report.pingWithData)
+    onprogress('test', 'end', 'ping-with-data', publicKey, report.pingWithData)
 
     // Ping three times in quick succession
+    onprogress('test', 'start', 'many-pings', publicKey)
     for (let i = 1; i <= 3; i++) {
-      onprogress('test-start', 'many-pings', i)
+      onprogress('test', 'start', 'many-pings-' + i, publicKey)
       report.manyPings.push(await timeAndCatch(() => this.ping(keyBuf)))
-      onprogress('test-end', 'many-pings', i, report.manyPings[i - 1])
+      onprogress('test', 'end', 'many-pings-' + i, publicKey, report.manyPings[i - 1])
     }
+    onprogress('test', 'end', 'many-pings', publicKey)
 
     return report
   }
@@ -128,9 +130,10 @@ module.exports = class Doctor {
     if (!manifest.servers || !Array.isArray(manifest.servers)) throw new Error('Malformed manifest')
     await this.dht.ready()
 
+    const addr = this.dht.remoteAddress()
     const start = Date.now()
     const report = {
-      remoteAddress: this.dht.remoteAddress(),
+      remoteAddress: { ...addr, type: natTypeToString(addr.type) },
       manifest,
       result: {},
       duration: null
@@ -140,7 +143,7 @@ module.exports = class Doctor {
     for (const { publicKey } of manifest.servers) {
       onprogress('start', publicKey)
       const keyString = Buffer.isBuffer(publicKey) ? publicKey.toString('hex') : publicKey
-      report.result[keyString] = await this.generateServerReport(publicKey)
+      report.result[keyString] = await this.generateServerReport(publicKey, onprogress)
       onprogress('end', publicKey)
     }
     onprogress('end')
@@ -190,11 +193,19 @@ async function timeAndCatch (f) {
   try {
     obj.result = await f()
   } catch (err) {
-    obj.err = err
+    obj.err = { message: err.message, stack: err.stack }
     if (err.info) obj.info = err.info
   }
   obj.duration = Date.now() - start
   return obj
+}
+
+function natTypeToString (type) {
+  if (type === DHT.NAT_PORT_RANDOMIZED) return 'randomized'
+  if (type === DHT.NAT_PORT_INCREMENTING) return 'incrementing'
+  if (type === DHT.NAT_PORT_CONSISTENT) return 'consistent'
+  if (type === DHT.NAT_OPEN) return 'open'
+  return 'unknown'
 }
 
 function noop () {}

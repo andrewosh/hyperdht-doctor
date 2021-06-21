@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 const readline = require('readline')
 const crypto = require('hypercore-crypto')
+const chalk = require('chalk')
 const got = require('got')
-const { Listr } = require('listr2')
+const Spinnies = require('spinnies')
 
 const DHT = require('@hyperswarm/dht')
 const Doctor = require('.')
@@ -71,89 +72,74 @@ async function test () {
     rl.question(consentPrompt, answer => resolve(answer))
   })
   rl.close()
+  console.log()
+
   if (!didConsent.has(maybeConsented)) {
     console.log('Exiting...')
     return
   }
-  console.log()
 
   const doctor = new Doctor()
-
-  const tasks = new Listr([
-    {
-      title: 'Load manifest',
-      task: loadManifest
-    },
-    {
-      title: 'Running tests',
-      task: runTests
-    },
-    {
-      title: 'Submitting report',
-      task: submitReport
-    }
-  ], {
-    ctx: {
-      doctor
-    },
-    persisentOutput: true
-  })
+  const spinnies = new Spinnies()
 
   try {
-    await tasks.run()
+    spinnies.add('manifest', { text: 'Loading manifest' })
+    const manifest = await loadManifest()
+    spinnies.succeed('manifest')
+
+    spinnies.add('tests', { text: 'Running tests' })
+    const report = await runTests(spinnies, doctor, manifest)
+    spinnies.succeed('tests')
+
+    spinnies.add('submit', { text: 'Submitting report' })
+    await submitReport(report)
+    spinnies.succeed('submit')
+
+    console.log('\n Test Completed! \n')
   } catch (err) {
-    console.error('\nCould not run the doctor:', err.message, '\n')
+    spinnies.stopAll('fail')
+    console.log('\n Test Failed:', err.message + '\n')
   } finally {
     await doctor.destroy()
   }
 }
 
-async function loadManifest (ctx) {
-  ctx.manifest = await got(args.url || MANIFEST_URL, {
+function loadManifest () {
+  return got(args.url || MANIFEST_URL, {
     headers: {
       'user-agent': USER_AGENT
     }
   }).json()
 }
 
-async function runTests (ctx, task) {
-  ctx.result = await ctx.doctor.generateFullReport(ctx.manifest, (phase, status, name, ...args) => {
-    let subtasks = new Map()
-    if (phase === 'test' && status === 'start') {
-      const publicKey = args[0]
-      let subtaskFinished = null
-      new Promise(resolve => {
-        subtaskFinished = resolve
-      })
-      console.log('adding new listr')
-      task.newListr([
-        {
-          title: titleForTest(name, publicKey),
-          task: subtaskFinished
-        }
-      ])
-      subtasks.set(name, subtaskFinished)
-    } else if (phase === 'test' && status === 'end') {
-      const finished = subtasks.get(name)
-      if (!finished) return
-      finished()
-    }
-  })
-
-  function titleForTest (name, publicKey) {
-    const keyString = publicKey.toString('hex')
-    if (name === 'first-ping') return `Attempting first connection to: ${keyString}`
-    if (name === 'ping-with-data') return `Sending data to ${keyString}`
-    if (name === 'many-pings') return `Pinging ${keyString} several times in quick succession`
-  }
-}
-
-async function submitReport (ctx) {
-  await got(args.url || MANIFEST_URL, {
+function submitReport (report) {
+  return got(args.url || MANIFEST_URL, {
     method: 'POST',
     headers: {
       'user-agent': USER_AGENT
     },
-    json: ctx.result
+    json: report
   })
+}
+
+async function runTests (spinnies, doctor, manifest) {
+  return doctor.generateFullReport(manifest, (phase, status, name, publicKey, report) => {
+    const title = getOutputText(name, publicKey)
+    if (phase === 'test' && status === 'start') {
+      if (title) spinnies.add(name, { text: title, indent: 2 })
+    } else if (phase === 'test' && status === 'end') {
+      if (!title) return
+      if (report && report.err) spinnies.fail(name)
+      else spinnies.succeed(name)
+    }
+  })
+
+  function getOutputText (name, publicKey) {
+    if (!name || !publicKey) return null
+    const keyString = publicKey.toString('hex')
+    if (name === 'first-ping') return `Attempting first connection to: ${keyString}`
+    if (name === 'ping-with-data') return `Sending data to ${keyString}`
+    if (name === 'many-pings') return `Pinging ${keyString} several times in quick succession`
+    return null
+  }
 }

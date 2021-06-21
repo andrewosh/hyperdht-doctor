@@ -15,7 +15,8 @@
     "ora": "^5.4.1",
     "pino": "^6.11.3",
     "prompt": "^1.1.0",
-    "pump": "^3.0.0"
+    "pump": "^3.0.0",
+    "spinnies": "^0.5.1"
   },
   "devDependencies": {
     "standard": "^16.0.3",
