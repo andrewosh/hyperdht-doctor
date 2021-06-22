@@ -124,22 +124,23 @@ function submitReport (report) {
 
 async function runTests (spinnies, doctor, manifest) {
   return doctor.generateFullReport(manifest, (phase, status, name, publicKey, report) => {
-    const title = getOutputText(name, publicKey)
+    const keyString = publicKey && publicKey.toString('hex')
+    const id = name + ':' + keyString
+    const title = getOutputText(name, keyString)
     if (phase === 'test' && status === 'start') {
-      if (title) spinnies.add(name, { text: title, indent: 2 })
+      if (title) spinnies.add(id, { text: title, indent: 2 })
     } else if (phase === 'test' && status === 'end') {
       if (!title) return
-      if (report && report.err) spinnies.fail(name)
-      else spinnies.succeed(name)
+      if (report && report.err) spinnies.fail(id)
+      else spinnies.succeed(id)
     }
   })
 
   function getOutputText (name, publicKey) {
     if (!name || !publicKey) return null
-    const keyString = publicKey.toString('hex')
-    if (name === 'first-ping') return `Attempting first connection to: ${keyString}`
-    if (name === 'ping-with-data') return `Sending data to ${keyString}`
-    if (name === 'many-pings') return `Pinging ${keyString} several times in quick succession`
+    if (name === 'first-ping') return `Attempting first connection to: ${publicKey}`
+    if (name === 'ping-with-data') return `Sending data to ${publicKey}`
+    if (name === 'many-pings') return `Pinging ${publicKey} several times in quick succession`
     return null
   }
 }

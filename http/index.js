@@ -96,7 +96,7 @@ module.exports = class CoordinationServer {
 
   async _open () {
     await this.db.open()
-    this.server.listen(this._port)
+    this.server.listen(this.port)
     this._timer = setInterval(this._refresher, this._refreshInterval)
     await this._refresher()
     this._opening = null
