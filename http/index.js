@@ -39,6 +39,9 @@ const manifestResponseSchema = {
               },
               type: {
                 type: 'string'
+              },
+              description: {
+                type: 'string'
               }
             }
           }
