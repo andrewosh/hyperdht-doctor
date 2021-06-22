@@ -81,6 +81,10 @@ async function test () {
 
   const doctor = new Doctor()
   const spinnies = new Spinnies()
+  await doctor.dht.ready()
+
+  console.log('\n Your Remote Address:', doctor.dht.remoteAddress())
+  console.log()
 
   try {
     spinnies.add('manifest', { text: 'Loading manifest' })
