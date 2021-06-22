@@ -60,7 +60,6 @@ module.exports = class Doctor {
   }
 
   async ping (publicKey) {
-    await this.dht.ready()
     const conn = this.dht.connect(publicKey)
     return new Promise((resolve, reject) => {
       conn.on('open', () => {
@@ -72,7 +71,6 @@ module.exports = class Doctor {
   }
 
   async pingWithData (publicKey) {
-    await this.dht.ready()
     const conn = this.dht.connect(publicKey)
     return new Promise((resolve, reject) => {
       conn.on('open', () => this._sendData(conn).then(resolve, reject))
@@ -81,8 +79,6 @@ module.exports = class Doctor {
   }
 
   async generateServerReport (publicKey, onprogress = noop) {
-    await this.dht.ready()
-
     const keyBuf = !Buffer.isBuffer(publicKey) ? Buffer.from(publicKey, 'hex') : publicKey
     const report = {
       firstPing: null,
@@ -128,7 +124,6 @@ module.exports = class Doctor {
 
   async generateFullReport (manifest, onprogress = noop) {
     if (!manifest.servers || !Array.isArray(manifest.servers)) throw new Error('Malformed manifest')
-    await this.dht.ready()
 
     const addr = this.dht.remoteAddress()
     const start = Date.now()
