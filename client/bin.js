@@ -100,12 +100,15 @@ async function test () {
     spinnies.succeed('submit')
 
     console.log('\n Test Completed! \n')
+    if (args.v || args.verbose) console.log(JSON.stringify(report, null, 2))
   } catch (err) {
     spinnies.stopAll('fail')
     console.log('\n Test Failed:', err.message + '\n')
   } finally {
     await doctor.destroy()
   }
+
+
 }
 
 function loadManifest () {
